@@ -4,8 +4,8 @@ export default createStore({
   state: () => ({
     api : {
       protocol : 'https:',
-      host : '//3.svetacdn.in',      
-      token : 'gZrhCKFj6pA1W4h96i6g5IjhW7aR0CLk'
+      host : '***',      
+      token : '***'
     },
     bookmarks: [],
     bookmarksResult: {},

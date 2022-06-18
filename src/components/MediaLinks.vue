@@ -23,8 +23,10 @@ export default {
             position.x = ((event.clientX-150) < 0) ? 20 : ((event.clientX + 150) > window.innerWidth) ? window.innerWidth - 320 : event.clientX - 150
             position.y = ((event.clientY-125) < 0) ? position.y = 55 : ((event.clientY + 125) > window.innerHeight) ? window.innerHeight - 250 : event.clientY - 125
             let sources = {}
-            for(let i of translation.links.qualities){
-                sources[i] = translation.links.link_base + '/' + i + '.mp4'
+            for(let quality of translation.links.qualities){
+              let dn = this.getCurrentTitle              
+              dn = dn + '_[' + quality + '].mp4'
+              sources[quality] = translation.links.links[quality] + '?dn=' + dn
             }
             this.setMediaDialog({
                 position: position,
@@ -40,7 +42,7 @@ export default {
         }
     },
     computed: {
-        ...mapGetters(['getState', 'getIsWatched'])        
+        ...mapGetters(['getState', 'getIsWatched', 'getCurrentTitle'])        
     }
 }
 </script>

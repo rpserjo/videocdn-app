@@ -4,8 +4,8 @@ export default createStore({
   state: () => ({
     api : {
       protocol : 'https:',
-      host : '//****.**',      
-      token : '****'
+      host : '//3.svetacdn.in',      
+      token : 'gZrhCKFj6pA1W4h96i6g5IjhW7aR0CLk'
     },
     bookmarks: [],
     bookmarksResult: {},
@@ -57,6 +57,14 @@ export default createStore({
     },
     getCurrentCode: (state) => {
       return [state.current.id, state.current.episode_code].join('::')
+    },
+    getCurrentTitle: (state) => {
+      let title = state[state.current.source][state.current.id].orig_title.split(' ').join('_')
+      if(state.current.type == 'tv'){
+        let episode_code = state.current.episode_code.split('_')
+        title = title + '_S' + episode_code[0] + 'E' + episode_code[1]
+      }
+      return title
     },
     getIsBookmarked: (state) => (id) => {
       return (state.bookmarks != null && state.bookmarks.indexOf(id) > -1)
@@ -216,7 +224,7 @@ export default createStore({
       commit('resetCurrent')
       state.searchResults = {}
       for(let type of types){
-        let url = await dispatch('prepareUrl', {type: type, query: searchQuery, year: yearFilter})
+        let url = await dispatch('prepareUrl', {type: type, query: searchQuery, year: yearFilter, limit: 100})
         state.showSpinner = true            
         try{
           const response = await fetch(url)
@@ -281,20 +289,17 @@ export default createStore({
         files = files[1].split(userkey[1]).join('')
         files = files.split('&quot;').join('"')
         let data = JSON.parse(files)
-        //let keys = Object.keys(data)
-        return {'type': type[1], 'data': JSON.parse(files), 'keys': Object.keys(data)}
+        return {'type': type[1], 'data': data, 'keys': Object.keys(data)}
       }
       const getLinks = (files) => {
-        let url_base
-        let qualities = []
         let links = files.split(',');
         links = links[links.length-1].substring(7).split(' or ');
+        let mediaLinks = {}
         for(let i = 0; i < links.length; i++){
-          let tmp = links[i].split('/');
-          if(qualities.indexOf(tmp[tmp.length-1].split('.mp4').join('')) < 0) qualities.push(tmp[tmp.length-1].split('.mp4').join(''))
-          url_base = tmp.slice(0, -1).join('/')
+          let quality = links[i].split('?dn=')[0].split('/').pop().split('.mp4').join('');
+          mediaLinks[quality] = state.api.protocol + links[i].split('?dn=')[0]
         }
-        return {qualities: qualities.sort(), link_base: state.api.protocol + url_base}
+        return {qualities: Object.keys(mediaLinks).sort(), links: mediaLinks}
       }
       const layout = (state[state.current.source][id].type == 'movie') ? 'detailsMovieLayout' : 'detailsTvLayout'
       state.current.layout = layout
@@ -386,7 +391,7 @@ export default createStore({
         if(folder[episode_key+1].links.qualities.indexOf(quality) == -1){
           quality = folder[episode_key+1].links.qualities[folder[episode_key+1].links.qualities.length -1]
         }
-        let next_src = folder[episode_key+1].links.link_base + '/' + quality + '.mp4'
+        let next_src = folder[episode_key+1].links.links[quality]
         setTimeout(() => {
           state.current.episode_key = episode_key + 1
           state.current.episode_code = folder[episode_key+1].episode_code
